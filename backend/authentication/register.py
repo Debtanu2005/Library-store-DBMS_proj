@@ -31,7 +31,7 @@ class RegisterManager:
                 VALUES (%s, %s, %s, NOW())
             """, (email, hashed_password, student_info.role))
 
-            user_id = self.cursor.lastrowid
+            user_id = self.cursor.fetchone()[0] 
 
             # Step 4: Insert into students table
             self.cursor.execute("""

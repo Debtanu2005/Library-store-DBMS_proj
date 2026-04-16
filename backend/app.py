@@ -4,7 +4,9 @@ from router import router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-app = FastAPI()  
+app = FastAPI()
+
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,37 +14,46 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routes
 app.include_router(router)
 
 
+# Custom Swagger Auth
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
+
     openapi_schema = get_openapi(
         title="Gyanpustak API",
         version="1.0.0",
         routes=app.routes,
     )
+
     openapi_schema["components"]["securitySchemes"] = {
         "BearerAuth": {
             "type": "http",
             "scheme": "bearer"
         }
     }
-    for path in openapi_schema["paths"].values():
-        for method in path.values():
-            method["security"] = [{"BearerAuth": []}]
+
+    # Apply auth except login/register
+    for path, methods in openapi_schema["paths"].items():
+        if "/login" not in path and "/register" not in path:
+            for method in methods.values():
+                method["security"] = [{"BearerAuth": []}]
+
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
+
 app.openapi = custom_openapi
 
-# ================= RUN SERVER =================
+
 if __name__ == "__main__":
-    # "app:app" tells uvicorn: look in app.py for the variable named app
     uvicorn.run(
-        "app:app",  # <--- CHANGED THIS LINE
+        "app:app",   # <-- change based on filename
         host="0.0.0.0",
-        port=8000,
+        port=7000,
         reload=True
     )

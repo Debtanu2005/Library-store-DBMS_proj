@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Folio — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/main.css"/>
+<link rel="stylesheet" href="css/auth.css"/>
+</head>
+<body class="auth-page">
+
+<div class="left-panel">
+  <a class="panel-logo" href="index.html">Fo<span>lio</span></a>
+  <div class="panel-middle">
+    <h2 class="panel-quote">Welcome<br/><em>back,</em><br/>reader.</h2>
+    <p class="panel-sub">Your shelf is waiting</p>
+  </div>
+  <div class="panel-shelf">
+    <div class="ps ps1"></div><div class="ps ps2"></div><div class="ps ps3"></div>
+    <div class="ps ps4"></div><div class="ps ps5"></div><div class="ps ps6"></div>
+    <div class="ps ps7"></div>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="form-container">
+    <p class="form-eyebrow">— Sign In</p>
+    <h1 class="form-title">Hello,<br/><em>again.</em></h1>
+    <p class="form-subtitle">Don't have an account? <a href="register.html">Create one →</a></p>
+
+    <div class="error-msg" id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <div class="field">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <a href="#" class="forgot-link">Forgot password?</a>
+
+    <button class="submit-btn" id="login-btn" onclick="handleLogin()">
+      <span class="btn-text">Sign In</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="divider"><span>or</span></div>
+    <a href="register.html" class="register-link">Create a new account</a>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

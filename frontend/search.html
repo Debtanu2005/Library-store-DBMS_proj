@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Folio — Browse Books</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/main.css"/>
+<link rel="stylesheet" href="css/pages.css"/>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a class="nav-logo" href="index.html">Fo<span>lio</span></a>
+  <ul class="nav-links">
+    <li><a href="search.html" class="active">Browse</a></li>
+    <li><a href="cart.html">Cart</a></li>
+    <li><a href="orders.html">Orders</a></li>
+    <li><a href="support.html">Support</a></li>
+    <li><a href="reviews.html">Reviews</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="cart.html" class="nav-cart-btn">
+      🛒 Cart <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+    </a>
+    <a href="login.html" class="nav-auth-btn" id="nav-auth-btn">Sign In</a>
+  </div>
+</nav>
+
+<!-- ── PAGE HEADER ── -->
+<div class="page-header">
+  <p class="page-eyebrow">— Catalog</p>
+  <h1 class="page-title">Browse <em>every title.</em></h1>
+</div>
+
+<!-- ── SEARCH BAR ── -->
+<div class="search-bar">
+  <div class="search-field-wrap">
+    <span class="search-icon">⌕</span>
+    <input
+      class="search-field"
+      type="text"
+      id="search-input"
+      placeholder="Type a title, author name, or keyword…"
+      autocomplete="off"
+    />
+  </div>
+  <!-- search type: matches backend BookSearch by_author_or_name -->
+  <div class="search-type">
+    <button class="type-btn active" id="type-all"    onclick="setType('all')">All</button>
+    <button class="type-btn"        id="type-author" onclick="setType('author')">Author</button>
+    <button class="type-btn"        id="type-title"  onclick="setType('title')">Title</button>
+  </div>
+  <button class="search-submit" onclick="doSearch()">Search</button>
+</div>
+
+<!-- ── BODY ── -->
+<div class="body-wrap">
+
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <p class="sidebar-title">SORT</p>
+    <div class="select-wrap">
+      <select id="sort-select" onchange="applyFiltersAndSort()">
+        <option value="">Relevance</option>
+        <option value="price_asc">Price: Low to High</option>
+        <option value="price_desc">Price: High to Low</option>
+        <option value="title_asc">Title: A to Z</option>
+        <option value="title_desc">Title: Z to A</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sidebar-section" style="margin-top: 30px;">
+    <p class="sidebar-title">CATEGORY</p>
+    
+    <label class="check-item">
+      <input type="checkbox" class="genre-filter" value="CS" onchange="applyFiltersAndSort()">
+      <span>Computer Science</span>
+    </label>
+    
+    <label class="check-item">
+      <input type="checkbox" class="genre-filter" value="ECE" onchange="applyFiltersAndSort()">
+      <span>Electronics (ECE)</span>
+    </label>
+    
+    <label class="check-item">
+      <input type="checkbox" class="genre-filter" value="ME" onchange="applyFiltersAndSort()">
+      <span>Mechanical (ME)</span>
+    </label>
+
+    <label class="check-item">
+      <input type="checkbox" class="genre-filter" value="EEE" onchange="applyFiltersAndSort()">
+      <span>Electrical (EEE)</span>
+    </label>
+  </div>
+
+  <button class="btn-ghost" onclick="clearFilters()">Clear All Filters</button>
+</aside>
+  <main class="results-area">
+    <div class="results-toolbar">
+      <p class="results-info" id="results-info">Search to discover books</p>
+      <div class="view-switcher">
+        <button class="view-btn active" id="btn-grid" onclick="setView('grid')">⊞</button>
+        <button class="view-btn" id="btn-list" onclick="setView('list')">☰</button>
+      </div>
+    </div>
+
+    <div id="books-grid">
+        </div>
+  </main>
+</div>
+<div id="toast"></div>
+
+<footer>
+  <div class="footer-logo">Fo<span>lio</span></div>
+  <p class="footer-copy">© 2026 Folio</p>
+</footer>
+
+<script>
+const BACKEND = 'http://127.0.0.1:7000';
+
+const SPINE_COLORS = [
+  '#b85c38','#4a6fa5','#2d4a3e','#7a4f7d',
+  '#5c4a3a','#3d6b5e','#8c3b2a','#4a7c8e',
+  '#6b5a4e','#c47b3a','#3a5c7a','#856a44',
+];
+
+let state = {
+  query: '', type: 'all', sort: '', view: 'grid',
+  books: [], filtered: [],
+};
+
+/* ── NAV ── */
+function initNav() {
+  const token = localStorage.getItem('access_token') || localStorage.getItem('folio_token');
+  const btn = document.getElementById('nav-auth-btn');
+  if (token) {
+    btn.textContent = 'Sign Out';
+    btn.href = '#';
+    btn.onclick = e => {
+      e.preventDefault();
+      localStorage.removeItem('folio_token');
+      localStorage.removeItem('access_token');
+      location.reload();
+    };
+  }
+}
+
+/* ── SEARCH TYPE ── */
+function setType(t) {
+  state.type = t;
+  ['all','author','title'].forEach(id =>
+    document.getElementById('type-' + id).classList.toggle('active', id === t)
+  );
+  const hints = {
+    all:    'Type a title, author name, or keyword…',
+    author: 'Enter an author name…',
+    title:  'Enter a book title…'
+  };
+  document.getElementById('search-input').placeholder = hints[t];
+}
+
+/* ── VIEW TOGGLE ── */
+function setView(v) {
+  state.view = v;
+  document.getElementById('btn-grid').classList.toggle('active', v === 'grid');
+  document.getElementById('btn-list').classList.toggle('active', v === 'list');
+  document.getElementById('books-grid').classList.toggle('is-list', v === 'list');
+  renderBooks(state.filtered);
+}
+
+/* ── NEW: FILTER & SORT LOGIC ── */
+function applyFiltersAndSort() {
+  // 1. Get selected categories
+  const checkedBoxes = document.querySelectorAll('.genre-filter:checked');
+  const selectedCategories = Array.from(checkedBoxes).map(cb => cb.value.toLowerCase());
+
+  // 2. Filter from the raw state.books
+  let result = state.books.filter(book => {
+    if (selectedCategories.length === 0) return true;
+    if (!book.category) return false;
+    return selectedCategories.includes(book.category.toLowerCase());
+  });
+
+  // 3. Apply Sorting
+  const sortVal = document.getElementById('sort-select').value;
+  state.sort = sortVal;
+
+  if (sortVal === 'title_asc')  result.sort((a,b) => (a.title||'').localeCompare(b.title||''));
+  if (sortVal === 'title_desc') result.sort((a,b) => (b.title||'').localeCompare(a.title||''));
+  if (sortVal === 'price_asc')  result.sort((a,b) => (a.price||0) - (b.price||0));
+  if (sortVal === 'price_desc') result.sort((a,b) => (b.price||0) - (a.price||0));
+
+  state.filtered = result;
+  renderBooks(state.filtered);
+}
+
+/* ── UPDATED: CLEAR FILTERS ── */
+function clearFilters() {
+  document.querySelectorAll('.genre-filter').forEach(c => c.checked = false);
+  document.getElementById('sort-select').value = '';
+  state.sort = '';
+  state.filtered = [...state.books];
+  renderBooks(state.filtered);
+}
+
+/* ── UPDATED: RENDER BOOKS ── */
+function renderBooks(books) {
+  const grid = document.getElementById('books-grid');
+  if (!grid) return;
+
+  grid.className = state.view === 'list' ? 'is-list' : '';
+
+  updateResultsInfo(
+    books.length === 0
+      ? 'No results'
+      : `<strong>${books.length}</strong> book${books.length !== 1 ? 's' : ''}${state.query ? ` for "<em>${escHtml(state.query)}</em>"` : ''}`
+  );
+
+  if (!books.length) {
+    grid.innerHTML = `<div class="state-box"><div class="state-title">No books found matching those filters</div></div>`;
+    return;
+  }
+  grid.innerHTML = books.map((book, i) => bookCardHTML(book, i)).join('');
+}
+/* ── SORT ── */
+function sortBooks() {
+  const val = document.getElementById('sort-select').value;
+  state.sort = val;
+  const books = [...state.books];
+  if (val === 'title_asc')  books.sort((a,b) => (a.title||'').localeCompare(b.title||''));
+  if (val === 'title_desc') books.sort((a,b) => (b.title||'').localeCompare(a.title||''));
+  if (val === 'author_asc') books.sort((a,b) => (a.author||'').localeCompare(b.author||''));
+  if (val === 'price_asc')  books.sort((a,b) => (a.price||0) - (b.price||0));
+  if (val === 'price_desc') books.sort((a,b) => (b.price||0) - (a.price||0));
+  state.filtered = books;
+  renderBooks(state.filtered);
+}
+
+/* ── CLEAR FILTERS ── */
+function clearFilters() {
+  document.querySelectorAll('.check-item input').forEach(c => c.checked = false);
+  document.getElementById('sort-select').value = '';
+  state.sort = '';
+  state.filtered = [...state.books];
+  renderBooks(state.filtered);
+}
+
+/* ── LOAD ALL BOOKS on page open ── */
+async function loadAllBooks() {
+  showSkeletons();
+  updateResultsInfo('Loading…');
+  try {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('folio_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${BACKEND}/all_books`, { headers });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+    const data = await res.json();
+    // /all_books returns a plain array
+    const books = Array.isArray(data) ? data : [];
+
+    state.books    = books;
+    state.filtered = books;
+    sortBooks();
+    renderBooks(state.filtered);
+  } catch (err) {
+    updateResultsInfo('Could not reach server — check backend is running');
+    document.getElementById('books-grid').innerHTML = `
+      <div class="state-box">
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">Backend unreachable</div>
+        <div class="state-sub">${err.message}</div>
+      </div>`;
+  }
+}
+
+/* ── SEARCH ── */
+async function doSearch() {
+  const query = document.getElementById('search-input').value.trim();
+  state.query = query;
+  showSkeletons();
+  updateResultsInfo('Searching…');
+
+  if (!query) { loadAllBooks(); return; }
+
+  try {
+    let url;
+    if (state.type === 'author') url = `${BACKEND}/search_books?author=${encodeURIComponent(query)}`;
+    else if (state.type === 'title') url = `${BACKEND}/search_books?name=${encodeURIComponent(query)}`;
+    else url = `${BACKEND}/search_books?q=${encodeURIComponent(query)}`;
+
+    const token = localStorage.getItem('access_token') || localStorage.getItem('folio_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(url, { headers });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+    const data = await res.json();
+    // router now returns {"results": [...]} directly
+    const books = Array.isArray(data)         ? data
+                : Array.isArray(data.results) ? data.results
+                : Array.isArray(data.books)   ? data.books
+                : [];
+
+    state.books    = books;
+    state.filtered = books;
+    sortBooks();
+    renderBooks(state.filtered);
+  } catch (err) {
+    updateResultsInfo('Search failed');
+    document.getElementById('books-grid').innerHTML = `
+      <div class="state-box">
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">Search failed</div>
+        <div class="state-sub">${err.message}</div>
+      </div>`;
+  }
+}
+
+/* ── RENDER ── */
+function renderBooks(books) {
+  const grid = document.getElementById('books-grid');
+  grid.className = state.view === 'list' ? 'is-list' : '';
+
+  updateResultsInfo(
+    books.length === 0
+      ? 'No results'
+      : `<strong>${books.length}</strong> book${books.length !== 1 ? 's' : ''}${state.query ? ` for "<em>${escHtml(state.query)}</em>"` : ''}`
+  );
+
+  if (!books.length) {
+    grid.innerHTML = `
+      <div class="state-box">
+        <div class="state-icon">📚</div>
+        <div class="state-title">${state.query ? `Nothing found for "${escHtml(state.query)}"` : 'No books available'}</div>
+        <div class="state-sub">Try a different search term</div>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = books.map((book, i) => bookCardHTML(book, i)).join('');
+}
+
+function bookCardHTML(book, idx) {
+  const color  = SPINE_COLORS[idx % SPINE_COLORS.length];
+  const title  = escHtml(book.title || 'Untitled');
+  const author = escHtml(book.author || 'Unknown Author');
+  const price  = book.price ? `<div class="book-price">₹${book.price}</div>` : '';
+  const id     = book.book_id || book.id || idx;
+
+  // Spine badges — grid view only (on cover)
+  const spineBadges = [
+    book.type            ? `<span class="spine-badge ${book.type}">${book.type}</span>`                       : '',
+    book.purchase_option ? `<span class="spine-badge ${book.purchase_option}">${book.purchase_option}</span>` : '',
+    book.format          ? `<span class="spine-badge format">${book.format}</span>`                           : '',
+  ].filter(Boolean).join('');
+
+  // Folio tags — list view only (in body)
+  const folioTags = [
+    book.type            ? `<span class="folio-tag ${book.type}">${book.type}</span>`                       : '',
+    book.purchase_option ? `<span class="folio-tag ${book.purchase_option}">${book.purchase_option}</span>` : '',
+    book.format          ? `<span class="folio-tag format">${book.format}</span>`                           : '',
+  ].filter(Boolean).join('');
+
+  const ratingVal  = parseFloat(book.rating || 0);
+  const ratingHtml = ratingVal > 0
+    ? `<div class="book-rating" style="color:var(--rust);margin-top:5px;font-size:.9rem;font-family:'DM Mono',monospace;">★ ${ratingVal.toFixed(1)}</div>`
+    : '<div class="rating-row" style="opacity:0.3">No reviews</div>';
+
+  return `
+    <div class="book-card" style="animation-delay:${idx*0.035}s" onclick="window.location.href='book_details.html?id=${id}'">
+      <a href="book_details.html?id=${id}" class="card-main-link">
+        <div class="book-spine" style="background:${color}">
+          <span class="book-spine-text">${title}</span>
+          <div class="spine-badges">${spineBadges}</div>
+        </div>
+        <div class="book-body">
+          <div class="book-title">${title}</div>
+          ${ratingHtml}
+          <div class="tag-row">${folioTags}</div>
+          <div class="book-author">${author}</div>
+          ${price}
+        </div>
+      </a>
+      <div class="book-footer">
+        <button class="add-cart-btn" data-id="${id}" data-title="${title}"
+          onclick="event.preventDefault();event.stopPropagation();addToCart(this)">
+          Add to Cart
+        </button>
+      </div>
+    </div>`;
+}
+/* ── ADD TO CART ── */
+async function addToCart(btn) {
+  const token = localStorage.getItem('access_token') || localStorage.getItem('folio_token');
+  if (!token) {
+    toast('Sign in to add books to your cart', 'err');
+    setTimeout(() => window.location.href = 'login.html', 1100);
+    return;
+  }
+  const bookId = btn.dataset.id;
+  const title  = btn.dataset.title;
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    const res = await fetch(
+      `${BACKEND}/add_to_cart?book_id=${encodeURIComponent(bookId)}&quantity=1`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.detail || `Error ${res.status}`);
+    }
+    btn.textContent = '✓ Added';
+    btn.classList.add('is-added');
+    toast(`"${title}" added to cart`, 'ok');
+    setTimeout(() => {
+      btn.textContent = 'Add to Cart';
+      btn.classList.remove('is-added');
+      btn.disabled = false;
+    }, 2000);
+  } catch (err) {
+    btn.textContent = 'Add to Cart';
+    btn.disabled = false;
+    toast(err.message, 'err');
+  }
+}
+
+/* ── HELPERS ── */
+function showSkeletons() {
+  const grid = document.getElementById('books-grid');
+  grid.className = '';
+  grid.innerHTML = Array.from({ length: 8 }, (_, i) => `
+    <div class="skel" style="animation-delay:${i*0.04}s">
+      <div class="skel-cover"></div>
+      <div class="skel-line"></div>
+      <div class="skel-line half"></div>
+    </div>`).join('');
+}
+
+function updateResultsInfo(html) {
+  document.getElementById('results-info').innerHTML = html;
+}
+
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+/* ── INIT ── */
+initNav();
+
+const urlParams = new URLSearchParams(window.location.search);
+const preQuery  = urlParams.get('q') || '';
+if (preQuery) document.getElementById('search-input').value = preQuery;
+
+window.addEventListener('DOMContentLoaded', () => {
+  preQuery ? doSearch() : loadAllBooks();
+});
+
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+</script>
+<script>
+const role = localStorage.getItem("role");
+
+if (role === "admin" || role === "super_admin") {
+    document.getElementById("admin-section").style.display = "block";
+
+    // Hide user features
+    document.querySelectorAll(".add-cart-btn").forEach(btn => btn.style.display = "none");
+}
+</script>
+</body>
+</html>

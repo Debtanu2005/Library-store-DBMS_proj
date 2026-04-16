@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Folio — Create Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/main.css"/>
+<link rel="stylesheet" href="css/auth.css"/>
+</head>
+<body class="auth-page">
+
+<div class="left-panel light">
+  <a class="panel-logo" href="index.html">Fo<span>lio</span></a>
+  <div>
+    <h2 class="panel-quote">Begin your<br/><em>collection</em><br/>today.</h2>
+    <p class="panel-accent">— Free to join, forever</p>
+    <div class="panel-steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Create your account</strong><span>Just an email and password to get started.</span></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Browse the catalog</strong><span>Search thousands of titles by author or name.</span></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Build your shelf</strong><span>Add to cart and place orders in seconds.</span></div></div>
+    </div>
+  </div>
+  <div style="font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">© 2026 Folio</div>
+</div>
+
+<div class="right-panel">
+  <div class="form-container">
+    <p class="form-eyebrow">— New Account</p>
+    <h1 class="form-title">Join<br/><em>Folio.</em></h1>
+    <p class="form-subtitle">Already a member? <a href="login.html">Sign in →</a></p>
+
+    <div class="error-msg" id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <div class="section-label">Account Details</div>
+
+    <div class="field">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Min. 6 characters" autocomplete="new-password" oninput="checkStrength(this.value)"/>
+      <div class="password-strength"><div class="password-strength-bar" id="strength-bar"></div></div>
+    </div>
+    <div class="field">
+      <label for="confirm">Confirm Password</label>
+      <input type="password" id="confirm" placeholder="Repeat password" autocomplete="new-password"/>
+    </div>
+
+    <div class="section-label" style="margin-top:1.6rem;">
+  Personal Info <span class="section-opt">(optional)</span>
+</div>
+
+<div class="field-row">
+  <div class="field">
+    <label for="first-name">First Name</label>
+    <input type="text" id="first-name" placeholder="Jane" autocomplete="given-name"/>
+  </div>
+  <div class="field">
+    <label for="last-name">Last Name</label>
+    <input type="text" id="last-name" placeholder="Doe" autocomplete="family-name"/>
+  </div>
+</div>
+
+<div class="field-row">
+  <div class="field">
+    <label for="phone">Phone</label>
+    <input type="tel" id="phone" placeholder="9XXXXXXXXX" maxlength="15"/>
+  </div>
+  <div class="field">
+    <label for="dob">Date of Birth</label>
+    <input type="date" id="dob"/>
+  </div>
+</div>
+
+<div class="section-label" style="margin-top:1.6rem;">
+  Academic Info <span class="section-opt">(optional)</span>
+</div>
+
+<div class="field">
+  <label for="university">University</label>
+  <div class="select-wrap">
+    <select id="university">
+  <option value="">Select your university…</option>
+  <option value="1">IIT Delhi</option>
+  <option value="2">NIT Trichy</option>
+  <option value="3">BITS Pilani</option>
+</select>
+    <svg class="select-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.4"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</div>
+
+<div class="field-row">
+  <div class="field">
+    <label for="major">Major / Branch</label>
+    <input type="text" id="major" placeholder="e.g. CSE, ECE, ME"/>
+  </div>
+  <div class="field">
+    <label for="status">Degree Type</label>
+    <div class="select-wrap">
+      <select id="status">
+        <option value="">Select…</option>
+        <option value="UG">UG — Undergraduate</option>
+        <option value="PG">PG — Postgraduate</option>
+      </select>
+      <svg class="select-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.4"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="field">
+  <label for="year">Year of Study</label>
+  <div class="select-wrap">
+    <select id="year">
+      <option value="">Select year…</option>
+    </select>
+    <svg class="select-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.4"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <span class="field-hint" id="year-hint"></span>
+</div>
+    <button class="submit-btn" id="register-btn" onclick="handleRegister()">
+      <span class="btn-text">Create Account</span>
+      <span class="spinner"></span>
+    </button>
+
+    <div class="divider"><span>or</span></div>
+    <a href="login.html" class="login-link">Sign in to existing account</a>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
