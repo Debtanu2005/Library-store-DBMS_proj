@@ -18,7 +18,7 @@ class CartManager:
     def create_cart(self, user_id: int) -> dict:
         self.cursor.execute("INSERT INTO cart (student_id) VALUES (%s)", (user_id,))
         self.conn.commit()
-        cart_id = self.cursor.lastrowid
+        cart_id = self.cursor.fetchone()[0]  # Get the generated cart_id
         return {"cart_id": cart_id, "user_id": user_id}
     def add_to_cart(self, user_id: int, book_id: int, quantity: int):
         try:

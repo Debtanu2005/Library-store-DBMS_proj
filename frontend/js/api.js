@@ -305,7 +305,7 @@ function initNav() {
   }
 }
 async function addBook() {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("folio_token");
 
   const res = await fetch("http://localhost:7000/admin/add-book", {
     method: "POST",

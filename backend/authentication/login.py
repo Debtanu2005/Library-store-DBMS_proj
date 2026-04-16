@@ -3,6 +3,7 @@ from authentication.hashing import verify_password
 from src.data_connection.connection import connect_db, disconnect_db
 from src.logger import logging
 from src.exception import MyException
+import sys
 
 
 class LoginManager:
@@ -21,36 +22,37 @@ class LoginManager:
             user_data = self.cursor.fetchone()
 
             if not user_data:
-                logging.warning(f"Login failed for email: {email}")
                 raise Exception("Invalid email or password")
 
             user_id, email, hashed_password, role = user_data
 
-    
             if not verify_password(password, hashed_password):
-                logging.warning(f"Invalid password for email: {email}")
                 raise MyException("Invalid email or password")
 
             token_data = {
+                "user_id": str(user_id),   # ← cast to str (fixes previous bug)
+                "email":   str(email),
+                "role":    str(role)
+            }
+
+            access_token = create_access_token(token_data)
+
+            self.conn.commit()             # ← commit on success
+
+            return {
+                "access_token": access_token,
                 "user_id": user_id,
                 "email": email,
                 "role": role
             }
 
-            access_token = create_access_token(token_data)
-
-            logging.info(f"User {email} logged in successfully")
-            return {"access_token": access_token,
-                    "user_id": user_id,
-                    "email": email,
-                    "role": role}
-
         except Exception as e:
+            self.conn.rollback()           # ← THIS is the critical fix
             logging.error(f"Login error: {str(e)}")
             raise e
-
+        
     def __del__(self):
         try:
-            disconnect_db() 
-        except:
-            logging.error("Error occurred while closing the database connection")
+            disconnect_db()
+        except Exception as e:
+            logging.error(f"Error during database disconnection: {str(e)}", sys)

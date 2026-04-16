@@ -192,21 +192,25 @@ def create_ticket(request: Request, ticket: TicketCreate):
         raise HTTPException(status_code=400, detail="user_id not found in token")
     return manager.create_ticket(user_id, ticket.category, ticket.title, ticket.description)
 @router.get("/all_books")
+
 def get_all_books():
     try:
         db_conn = connect_db()
         db_cursor = db_conn.cursor()
         
-        # Aggregating ratings and review counts per book
         query = """
-            SELECT b.book_id, b.title, b.publisher, b.price, b.quantity,
-                   b.type, b.purchase_option, b.format, b.language, b.edition, b.category,
-                   IFNULL(AVG(r.rating), 0) AS avg_rating, 
-                   COUNT(r.review_id) AS review_count
+            SELECT 
+                b.book_id, b.title, b.publisher, b.price, b.quantity,
+                b.type, b.purchase_option, b.format, b.language, b.edition, b.category,
+                COALESCE(AVG(r.rating), 0) AS avg_rating,
+                COUNT(r.review_id) AS review_count
             FROM books b
             LEFT JOIN reviews r ON b.book_id = r.book_id
-            GROUP BY b.book_id
+            GROUP BY 
+                b.book_id, b.title, b.publisher, b.price, b.quantity,
+                b.type, b.purchase_option, b.format, b.language, b.edition, b.category
         """
+
         db_cursor.execute(query)
         book_rows = db_cursor.fetchall()
         db_cursor.close()
@@ -215,7 +219,7 @@ def get_all_books():
             {
                 "book_id": row[0], 
                 "title": row[1], 
-                "author": row[2], # Using publisher column as author for now
+                "author": row[2],
                 "price": float(row[3]), 
                 "quantity": row[4], 
                 "type": row[5],
@@ -229,6 +233,7 @@ def get_all_books():
             }
             for row in book_rows
         ]
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
   

@@ -27,11 +27,12 @@ class RegisterManager:
 
             # Step 3: Insert into users table
             self.cursor.execute("""
-                INSERT INTO users (email, password, role, created_at)
-                VALUES (%s, %s, %s, NOW())
+            INSERT INTO users (email, password, role, created_at)
+            VALUES (%s, %s, %s, NOW())
+            RETURNING user_id
             """, (email, hashed_password, student_info.role))
 
-            user_id = self.cursor.fetchone()[0] 
+            user_id = self.cursor.fetchone()[0]
 
             # Step 4: Insert into students table
             self.cursor.execute("""
