@@ -1,0 +1,39 @@
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+backend/venv/
+# backend/.env
+**/*.egg-info
+**/.eggs
+
+# Node
+frontend/node_modules/
+frontend/.npm
+
+# Version control
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+**/*.swp
+
+# Logs
+**/*.log
+logs/
+
+# Docker
+Dockerfile*
+# docker-compose*.yml
+.dockerignore
+
+# Docs
+README.md

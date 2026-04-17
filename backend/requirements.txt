@@ -16,3 +16,6 @@ python-dotenv
 mysql-connector-python
 passlib[bcrypt]
 python-jose
+pyJWT
+pytest
+pytest-asyncio

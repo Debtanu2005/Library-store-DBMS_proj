@@ -1,39 +1,43 @@
 import psycopg2
-from src.logger import logging
+import os
+# from src.logger import logging
 from src.exception import MyException
 import sys
-import string 
-# global connection object
+import dotenv
+dotenv.load_dotenv()
 
+database_url = os.getenv("DATABASE_URL")
+print(f"Database URL: {database_url}")  # Debugging line to check if DATABASE_URL is loaded
 conn = None
 
-def connect_db()->psycopg2.extensions.connection:
+def connect_db() -> psycopg2.extensions.connection:
     global conn
-    
+
     if conn is not None and conn.closed == 0:
         print("Database already connected.")
         return conn
-    
+
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="DBMS_proj",
-            user="postgres",
-            password="Debtanu@7861",
-            port="5432"
-        )
+        DATABASE_URL = os.getenv("DATABASE_URL")
+
+        if not DATABASE_URL:
+            raise Exception("DATABASE_URL not found in environment variables")
+
+        conn = psycopg2.connect(DATABASE_URL)
+
         print("Database connection established successfully.")
         return conn
-    
+
     except Exception as e:
         raise MyException(e, sys)
-    
-    
-def disconnect_db()->psycopg2.extensions.connection:
+
+
+def disconnect_db():
     global conn
+
     if conn is None or conn.closed != 0:
         return None
-    
+
     try:
         conn.close()
         print("Database connection closed successfully.")
@@ -41,8 +45,3 @@ def disconnect_db()->psycopg2.extensions.connection:
 
     except Exception as e:
         raise MyException(e, sys)
-    
-
-
-# connect_db()
-# disconnect_db()

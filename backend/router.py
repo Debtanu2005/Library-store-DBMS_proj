@@ -196,7 +196,7 @@ def create_ticket(request: Request, ticket: TicketCreate):
 def get_all_books():
     try:
         db_conn = connect_db()
-        db_cursor = db_conn.cursor()
+        db_cursor = db_conn.cursor()    
         
         query = """
             SELECT 
